@@ -1,0 +1,765 @@
+/* ===================================
+   CSS 변수 및 기본 설정
+   =================================== */
+:root {
+  --bg-primary: #1a1a2e;
+  --bg-secondary: #16213e;
+  --bg-card: #0f3460;
+  --bg-card-hover: #1a4a7a;
+  --text-primary: #e8e8e8;
+  --text-secondary: #a0a0b8;
+  --text-muted: #6c6c80;
+  --accent-a: #4361ee;
+  --accent-a-light: #5a7cf7;
+  --accent-b: #06d6a0;
+  --accent-b-light: #2ee8b7;
+  --success: #06d6a0;
+  --success-dark: #04a87e;
+  --fail: #ef476f;
+  --fail-dark: #d13660;
+  --border-color: #2a2a4a;
+  --overlay-bg: rgba(10, 10, 20, 0.85);
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* ===================================
+   리셋 및 기본 스타일
+   =================================== */
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 16px;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans KR', sans-serif;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  min-height: 100dvh;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+#app {
+  max-width: 480px;
+  margin: 0 auto;
+  min-height: 100dvh;
+  position: relative;
+}
+
+/* ===================================
+   화면 관리
+   =================================== */
+.screen {
+  display: none;
+  min-height: 100dvh;
+  flex-direction: column;
+  animation: fadeIn 0.25s ease;
+}
+
+.screen.active {
+  display: flex;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ===================================
+   헤더
+   =================================== */
+.app-header {
+  padding: 20px 20px 12px;
+  text-align: center;
+  padding-top: calc(20px + env(safe-area-inset-top, 0px));
+}
+
+.app-header h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+.screen-header {
+  display: flex;
+  align-items: center;
+  padding: 16px 20px;
+  gap: 12px;
+  padding-top: calc(16px + env(safe-area-inset-top, 0px));
+}
+
+.screen-header h2 {
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.back-btn {
+  background: none;
+  border: none;
+  color: var(--text-primary);
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: var(--radius-sm);
+  transition: background 0.2s;
+  min-width: 44px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.back-btn:active {
+  background: var(--bg-secondary);
+}
+
+/* ===================================
+   캘린더
+   =================================== */
+.calendar-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 20px 16px;
+}
+
+.calendar-nav h2 {
+  font-size: 1.15rem;
+  font-weight: 600;
+}
+
+.nav-btn {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  font-size: 1.1rem;
+  cursor: pointer;
+  padding: 8px 14px;
+  border-radius: var(--radius-sm);
+  transition: background 0.2s;
+  min-width: 44px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav-btn:active {
+  background: var(--bg-card);
+}
+
+.calendar-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  padding: 0 12px 8px;
+  text-align: center;
+}
+
+.calendar-weekdays span {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-weight: 500;
+  padding: 4px 0;
+}
+
+/* 일요일 빨간색 */
+.calendar-weekdays span:first-child {
+  color: var(--fail);
+}
+
+/* 토요일 파란색 */
+.calendar-weekdays span:last-child {
+  color: var(--accent-a);
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  padding: 0 12px;
+  gap: 2px;
+}
+
+.calendar-cell {
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: background 0.2s;
+  position: relative;
+  font-size: 0.95rem;
+  gap: 4px;
+}
+
+.calendar-cell:active {
+  background: var(--bg-secondary);
+}
+
+.calendar-cell.other-month {
+  color: var(--text-muted);
+  opacity: 0.4;
+}
+
+.calendar-cell.today {
+  background: var(--bg-secondary);
+  border: 1.5px solid var(--accent-a);
+  font-weight: 700;
+}
+
+.calendar-cell .day-number {
+  font-size: 0.9rem;
+  line-height: 1;
+}
+
+.calendar-cell .workout-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  position: absolute;
+  bottom: 6px;
+}
+
+.calendar-cell .workout-dot.plan-a {
+  background: var(--accent-a);
+}
+
+.calendar-cell .workout-dot.plan-b {
+  background: var(--accent-b);
+}
+
+/* ===================================
+   날짜 상세 화면
+   =================================== */
+.day-detail-content {
+  flex: 1;
+  padding: 0 20px 20px;
+  overflow-y: auto;
+}
+
+.record-summary {
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.record-summary h4 {
+  font-size: 1rem;
+  margin-bottom: 12px;
+  color: var(--text-primary);
+}
+
+.record-exercise {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.record-exercise:last-child {
+  border-bottom: none;
+}
+
+.record-exercise-name {
+  font-weight: 600;
+  font-size: 0.95rem;
+  margin-bottom: 6px;
+}
+
+.record-sets {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.record-set-badge {
+  font-size: 0.75rem;
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-weight: 500;
+}
+
+.record-set-badge.success {
+  background: rgba(6, 214, 160, 0.15);
+  color: var(--success);
+}
+
+.record-set-badge.fail {
+  background: rgba(239, 71, 111, 0.15);
+  color: var(--fail);
+}
+
+.plan-selection {
+  padding: 16px 20px;
+  padding-bottom: calc(16px + var(--safe-bottom));
+  display: flex;
+  gap: 12px;
+}
+
+.plan-btn {
+  flex: 1;
+  padding: 16px;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.15s, opacity 0.15s;
+  min-height: 56px;
+  color: #fff;
+}
+
+.plan-btn:active {
+  transform: scale(0.97);
+  opacity: 0.85;
+}
+
+.plan-btn.plan-a {
+  background: var(--accent-a);
+}
+
+.plan-btn.plan-b {
+  background: var(--accent-b);
+  color: #1a1a2e;
+}
+
+/* ===================================
+   운동 세션 화면
+   =================================== */
+.exercise-progress {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 20px 16px;
+}
+
+.exercise-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--border-color);
+  transition: background 0.3s, transform 0.3s;
+}
+
+.exercise-dot.completed {
+  background: var(--success);
+}
+
+.exercise-dot.current {
+  background: var(--accent-a);
+  transform: scale(1.3);
+}
+
+.workout-card-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 0 20px;
+  overflow-y: auto;
+}
+
+.workout-card {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  padding: 32px 24px;
+  text-align: center;
+  box-shadow: var(--shadow);
+  margin-bottom: 16px;
+}
+
+.exercise-name {
+  font-size: 1.3rem;
+  font-weight: 700;
+  margin-bottom: 20px;
+  line-height: 1.3;
+}
+
+.set-info {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+
+.set-label {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin-right: 4px;
+}
+
+.set-number {
+  font-size: 2.5rem;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--accent-a-light);
+}
+
+.set-separator {
+  font-size: 1.5rem;
+  color: var(--text-muted);
+}
+
+.total-sets {
+  font-size: 1.5rem;
+  color: var(--text-muted);
+}
+
+.reps-info {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 6px;
+}
+
+.reps-label {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.reps-number {
+  font-size: 2rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.reps-unit {
+  font-size: 1rem;
+  color: var(--text-secondary);
+}
+
+/* 세트 히스토리 */
+.set-history {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.set-history-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--bg-secondary);
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+}
+
+.set-history-item .set-label-text {
+  color: var(--text-secondary);
+}
+
+.set-history-item .set-result {
+  font-weight: 600;
+}
+
+.set-history-item .set-result.success {
+  color: var(--success);
+}
+
+.set-history-item .set-result.fail {
+  color: var(--fail);
+}
+
+/* 하단 액션 버튼 */
+.workout-actions {
+  display: flex;
+  gap: 12px;
+  padding: 16px 20px;
+  padding-bottom: calc(16px + var(--safe-bottom));
+  background: var(--bg-primary);
+}
+
+.action-btn {
+  flex: 1;
+  padding: 18px;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 1.15rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform 0.15s, opacity 0.15s;
+  min-height: 60px;
+  color: #fff;
+  letter-spacing: 1px;
+}
+
+.action-btn:active {
+  transform: scale(0.96);
+  opacity: 0.85;
+}
+
+.success-btn {
+  background: var(--success);
+  color: #1a1a2e;
+}
+
+.fail-btn {
+  background: var(--fail);
+}
+
+/* ===================================
+   오버레이 & 모달
+   =================================== */
+.overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--overlay-bg);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 100;
+  justify-content: center;
+  align-items: center;
+  animation: overlayIn 0.25s ease;
+}
+
+.overlay.active {
+  display: flex;
+}
+
+@keyframes overlayIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* 타이머 */
+.timer-content {
+  text-align: center;
+}
+
+.timer-label {
+  font-size: 1.1rem;
+  color: var(--text-secondary);
+  margin-bottom: 16px;
+  font-weight: 500;
+}
+
+.timer-display {
+  font-size: 6rem;
+  font-weight: 800;
+  line-height: 1;
+  margin-bottom: 8px;
+  font-variant-numeric: tabular-nums;
+  animation: pulse 1s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+.timer-unit {
+  font-size: 1.2rem;
+  color: var(--text-muted);
+  margin-bottom: 32px;
+}
+
+.skip-timer-btn {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  padding: 12px 32px;
+  border-radius: var(--radius-md);
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background 0.2s;
+  min-height: 44px;
+}
+
+.skip-timer-btn:active {
+  background: var(--bg-card);
+}
+
+/* 모달 */
+.modal-content {
+  background: var(--bg-secondary);
+  border-radius: var(--radius-lg);
+  padding: 28px 24px;
+  margin: 0 24px;
+  max-width: 360px;
+  width: 100%;
+  text-align: center;
+  box-shadow: var(--shadow);
+}
+
+.modal-content h3 {
+  font-size: 1.15rem;
+  margin-bottom: 20px;
+  font-weight: 700;
+}
+
+.modal-content p {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  margin-bottom: 20px;
+  line-height: 1.5;
+}
+
+/* 실패 입력 */
+.fail-input-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.reps-adjust-btn {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-size: 1.4rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+.reps-adjust-btn:active {
+  background: var(--bg-card-hover);
+}
+
+.fail-reps-input {
+  width: 72px;
+  height: 56px;
+  text-align: center;
+  font-size: 2rem;
+  font-weight: 700;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  -moz-appearance: textfield;
+}
+
+.fail-reps-input::-webkit-outer-spin-button,
+.fail-reps-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.fail-reps-unit {
+  display: block;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  margin-bottom: 20px;
+}
+
+.confirm-btn {
+  width: 100%;
+  padding: 14px;
+  background: var(--accent-a);
+  border: none;
+  border-radius: var(--radius-md);
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.15s, opacity 0.15s;
+  min-height: 48px;
+}
+
+.confirm-btn:active {
+  transform: scale(0.97);
+  opacity: 0.85;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.cancel-btn {
+  flex: 1;
+  padding: 14px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+  min-height: 48px;
+}
+
+.cancel-btn:active {
+  background: var(--bg-card-hover);
+}
+
+.modal-actions .confirm-btn {
+  flex: 1;
+}
+
+/* 운동 완료 */
+.complete-content {
+  padding: 32px 24px;
+}
+
+.complete-icon {
+  font-size: 3.5rem;
+  margin-bottom: 12px;
+}
+
+.complete-content h3 {
+  font-size: 1.3rem;
+  margin-bottom: 20px;
+}
+
+.complete-summary {
+  text-align: left;
+  margin-bottom: 24px;
+}
+
+.complete-exercise-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border-color);
+  font-size: 0.9rem;
+}
+
+.complete-exercise-item:last-child {
+  border-bottom: none;
+}
+
+.complete-exercise-name {
+  font-weight: 600;
+}
+
+.complete-exercise-result {
+  color: var(--text-secondary);
+}
+
+/* ===================================
+   반응형 (태블릿 이상)
+   =================================== */
+@media (min-width: 481px) {
+  #app {
+    border-left: 1px solid var(--border-color);
+    border-right: 1px solid var(--border-color);
+  }
+}

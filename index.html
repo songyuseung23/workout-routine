@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#1a1a2e">
+  <title>운동 기록</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="app">
+
+    <!-- 1. 캘린더 화면 (기본 화면) -->
+    <div id="calendar-view" class="screen active">
+      <header class="app-header">
+        <h1>운동 기록</h1>
+      </header>
+      <div class="calendar-nav">
+        <button id="prev-month-btn" class="nav-btn" aria-label="이전 달">&lt;</button>
+        <h2 id="calendar-month-year"></h2>
+        <button id="next-month-btn" class="nav-btn" aria-label="다음 달">&gt;</button>
+      </div>
+      <div class="calendar-weekdays">
+        <span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span>
+      </div>
+      <div id="calendar-grid" class="calendar-grid">
+        <!-- JS가 캘린더 셀을 생성 -->
+      </div>
+    </div>
+
+    <!-- 2. 날짜 상세 화면 -->
+    <div id="day-detail-view" class="screen">
+      <header class="screen-header">
+        <button id="day-detail-back" class="back-btn" aria-label="뒤로가기">&larr;</button>
+        <h2 id="day-detail-date"></h2>
+      </header>
+      <div id="day-detail-content" class="day-detail-content">
+        <!-- 기존 기록 표시 영역 -->
+      </div>
+      <div id="plan-selection" class="plan-selection">
+        <button id="start-plan-a" class="plan-btn plan-a">A 플랜 시작</button>
+        <button id="start-plan-b" class="plan-btn plan-b">B 플랜 시작</button>
+      </div>
+    </div>
+
+    <!-- 3. 운동 세션 화면 -->
+    <div id="workout-view" class="screen">
+      <header class="screen-header">
+        <button id="workout-back" class="back-btn" aria-label="운동 종료">&larr;</button>
+        <h2 id="workout-plan-name"></h2>
+      </header>
+
+      <!-- 종목 진행 표시 -->
+      <div id="exercise-progress" class="exercise-progress">
+        <!-- 종목별 진행 dot 표시 -->
+      </div>
+
+      <!-- 현재 운동 카드 -->
+      <div class="workout-card-container">
+        <div id="workout-card" class="workout-card">
+          <div class="exercise-name" id="current-exercise-name"></div>
+          <div class="set-info">
+            <span class="set-label">세트</span>
+            <span id="current-set-number" class="set-number"></span>
+            <span class="set-separator">/</span>
+            <span id="total-sets" class="total-sets"></span>
+          </div>
+          <div class="reps-info">
+            <span class="reps-label">목표</span>
+            <span id="target-reps" class="reps-number"></span>
+            <span class="reps-unit">회</span>
+          </div>
+        </div>
+
+        <!-- 현재 종목 세트 히스토리 -->
+        <div id="set-history" class="set-history">
+          <!-- 완료된 세트 기록 표시 -->
+        </div>
+      </div>
+
+      <!-- 하단 고정 액션 버튼 -->
+      <div class="workout-actions">
+        <button id="fail-btn" class="action-btn fail-btn">실패</button>
+        <button id="success-btn" class="action-btn success-btn">성공</button>
+      </div>
+    </div>
+
+    <!-- 4. 휴식 타이머 오버레이 -->
+    <div id="timer-overlay" class="overlay">
+      <div class="timer-content">
+        <div class="timer-label">휴식 시간</div>
+        <div id="timer-display" class="timer-display">90</div>
+        <div class="timer-unit">초</div>
+        <button id="skip-timer-btn" class="skip-timer-btn">건너뛰기</button>
+      </div>
+    </div>
+
+    <!-- 5. 실패 입력 모달 -->
+    <div id="fail-modal" class="overlay">
+      <div class="modal-content">
+        <h3>몇 회 수행했나요?</h3>
+        <div class="fail-input-container">
+          <button id="fail-reps-minus" class="reps-adjust-btn">−</button>
+          <input type="number" id="fail-reps-input" class="fail-reps-input" min="0" value="0" inputmode="numeric">
+          <button id="fail-reps-plus" class="reps-adjust-btn">+</button>
+        </div>
+        <span class="fail-reps-unit">회</span>
+        <button id="fail-confirm-btn" class="confirm-btn">확인</button>
+      </div>
+    </div>
+
+    <!-- 6. 운동 완료 모달 -->
+    <div id="complete-modal" class="overlay">
+      <div class="modal-content complete-content">
+        <div class="complete-icon">💪</div>
+        <h3>운동 완료!</h3>
+        <div id="complete-summary" class="complete-summary">
+          <!-- 운동 요약 -->
+        </div>
+        <button id="complete-confirm-btn" class="confirm-btn">확인</button>
+      </div>
+    </div>
+
+    <!-- 7. 기록 덮어쓰기 확인 모달 -->
+    <div id="overwrite-modal" class="overlay">
+      <div class="modal-content">
+        <h3>이미 기록이 있습니다</h3>
+        <p>기존 기록을 덮어쓰시겠습니까?</p>
+        <div class="modal-actions">
+          <button id="overwrite-cancel" class="cancel-btn">취소</button>
+          <button id="overwrite-confirm" class="confirm-btn">확인</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
