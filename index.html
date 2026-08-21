@@ -16,6 +16,7 @@
     <div id="calendar-view" class="screen active">
       <header class="app-header">
         <h1>운동 기록</h1>
+        <button id="manage-plans-btn" class="header-action-btn" aria-label="플랜 관리">플랜 관리</button>
       </header>
       <div class="calendar-nav">
         <button id="prev-month-btn" class="nav-btn" aria-label="이전 달">&lt;</button>
@@ -30,6 +31,77 @@
       </div>
     </div>
 
+    <!-- 8. 플랜 관리 화면 -->
+    <div id="plan-manage-view" class="screen">
+      <header class="screen-header">
+        <button id="plan-manage-back" class="back-btn" aria-label="뒤로가기">&larr;</button>
+        <h2>플랜 관리</h2>
+      </header>
+      <div class="plan-manage-content">
+        <div class="plan-section">
+          <h3 class="plan-section-title">기본 플랜</h3>
+          <div id="default-plans-list" class="plans-list">
+            <!-- JS가 기본 플랜 목록 생성 -->
+          </div>
+        </div>
+        <div class="plan-section">
+          <h3 class="plan-section-title">커스텀 플랜</h3>
+          <div id="custom-plans-list" class="plans-list">
+            <!-- JS가 커스텀 플랜 목록 생성 -->
+          </div>
+          <button id="add-plan-btn" class="add-plan-btn">+ 새 플랜 추가</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 9. 커스텀 플랜 생성 화면 -->
+    <div id="plan-create-view" class="screen">
+      <header class="screen-header">
+        <button id="plan-create-back" class="back-btn" aria-label="뒤로가기">&larr;</button>
+        <h2>새 플랜 만들기</h2>
+      </header>
+      <div class="plan-create-content">
+        <div class="form-group">
+          <label for="plan-name-input">플랜 이름</label>
+          <input type="text" id="plan-name-input" class="form-input" placeholder="예: C 플랜">
+        </div>
+        <div class="form-group">
+          <label>종목 목록</label>
+          <div id="exercise-list-form" class="exercise-list-form">
+            <!-- JS가 종목 입력 폼 생성 -->
+          </div>
+          <button id="add-exercise-btn" class="add-exercise-btn">+ 종목 추가</button>
+        </div>
+      </div>
+      <div class="plan-create-actions">
+        <button id="save-plan-btn" class="confirm-btn">플랜 저장</button>
+      </div>
+    </div>
+
+    <!-- 10. 플랜 삭제 확인 모달 -->
+    <div id="delete-plan-modal" class="overlay">
+      <div class="modal-content">
+        <h3>플랜을 삭제하시겠습니까?</h3>
+        <p id="delete-plan-name"></p>
+        <div class="modal-actions">
+          <button id="delete-plan-cancel" class="cancel-btn">취소</button>
+          <button id="delete-plan-confirm" class="confirm-btn danger-btn">삭제</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 11. 기록 삭제 확인 모달 -->
+    <div id="delete-record-modal" class="overlay">
+      <div class="modal-content">
+        <h3>이 기록을 삭제하시겠습니까?</h3>
+        <p>삭제된 기록은 복구할 수 없습니다.</p>
+        <div class="modal-actions">
+          <button id="delete-record-cancel" class="cancel-btn">취소</button>
+          <button id="delete-record-confirm" class="confirm-btn danger-btn">삭제</button>
+        </div>
+      </div>
+    </div>
+
     <!-- 2. 날짜 상세 화면 -->
     <div id="day-detail-view" class="screen">
       <header class="screen-header">
@@ -40,8 +112,7 @@
         <!-- 기존 기록 표시 영역 -->
       </div>
       <div id="plan-selection" class="plan-selection">
-        <button id="start-plan-a" class="plan-btn plan-a">A 플랜 시작</button>
-        <button id="start-plan-b" class="plan-btn plan-b">B 플랜 시작</button>
+        <!-- JS가 플랜 버튼을 동적 생성 -->
       </div>
     </div>
 

@@ -1,9 +1,5 @@
-// ===================================
-// 운동 기록 앱 - app.js
-// ===================================
-
-// === 운동 플랜 데이터 ===
-const PLANS = {
+// === 기본 운동 플랜 데이터 (수정 불가) ===
+const DEFAULT_PLANS = {
   A: {
     name: 'A 플랜',
     exercises: [
@@ -22,10 +18,19 @@ const PLANS = {
   }
 };
 
+// 모든 플랜을 합친 객체 (기본 + 커스텀)
+let PLANS = {};
+
+// 플랜 목록 갱신
+function refreshPlans() {
+  PLANS = { ...DEFAULT_PLANS, ...DataManager.loadCustomPlans() };
+}
+
 // === 데이터 관리 ===
 const DataManager = {
   RECORDS_KEY: 'workoutRecords',
   IN_PROGRESS_KEY: 'workoutInProgress',
+  CUSTOM_PLANS_KEY: 'customPlans',
 
   loadRecords() {
     try {
@@ -51,6 +56,13 @@ const DataManager = {
     this.saveRecords(records);
   },
 
+  // 기록 삭제
+  deleteRecord(dateStr) {
+    const records = this.loadRecords();
+    delete records[dateStr];
+    this.saveRecords(records);
+  },
+
   // 진행 중인 운동 저장 (페이지 새로고침 대비)
   saveInProgress(state) {
     localStorage.setItem(this.IN_PROGRESS_KEY, JSON.stringify(state));
@@ -67,6 +79,34 @@ const DataManager = {
 
   clearInProgress() {
     localStorage.removeItem(this.IN_PROGRESS_KEY);
+  },
+
+  // 커스텀 플랜 관리
+  loadCustomPlans() {
+    try {
+      const data = localStorage.getItem(this.CUSTOM_PLANS_KEY);
+      return data ? JSON.parse(data) : {};
+    } catch {
+      return {};
+    }
+  },
+
+  saveCustomPlans(plans) {
+    localStorage.setItem(this.CUSTOM_PLANS_KEY, JSON.stringify(plans));
+  },
+
+  addCustomPlan(key, plan) {
+    const plans = this.loadCustomPlans();
+    plans[key] = plan;
+    this.saveCustomPlans(plans);
+    refreshPlans();
+  },
+
+  deleteCustomPlan(key) {
+    const plans = this.loadCustomPlans();
+    delete plans[key];
+    this.saveCustomPlans(plans);
+    refreshPlans();
   }
 };
 
@@ -220,7 +260,13 @@ const Calendar = {
     // 운동 기록 dot 표시
     if (record && record.plan) {
       const dot = document.createElement('span');
-      dot.className = `workout-dot plan-${record.plan.toLowerCase()}`;
+      const planLower = record.plan.toLowerCase();
+      // 기본 플랜은 plan-a, plan-b / 커스텀 플랜은 plan-custom
+      if (planLower === 'a' || planLower === 'b') {
+        dot.className = `workout-dot plan-${planLower}`;
+      } else {
+        dot.className = 'workout-dot plan-custom';
+      }
       cell.appendChild(dot);
     }
 
@@ -253,12 +299,17 @@ const DayDetail = {
       Calendar.render(); // 캘린더 갱신
     });
 
-    document.getElementById('start-plan-a').addEventListener('click', () => {
-      this.startPlan('A');
+    // 기록 삭제 모달 이벤트
+    document.getElementById('delete-record-cancel').addEventListener('click', () => {
+      hideOverlay('delete-record-modal');
     });
 
-    document.getElementById('start-plan-b').addEventListener('click', () => {
-      this.startPlan('B');
+    document.getElementById('delete-record-confirm').addEventListener('click', () => {
+      hideOverlay('delete-record-modal');
+      if (this.selectedDate) {
+        DataManager.deleteRecord(this.selectedDate);
+        this.show(this.selectedDate); // 화면 갱신
+      }
     });
   },
 
@@ -281,12 +332,44 @@ const DayDetail = {
       content.innerHTML = '<p style="color: var(--text-muted); text-align: center; padding: 40px 0;">기록이 없습니다</p>';
     }
 
+    // 플랜 선택 버튼 동적 생성
+    this.renderPlanButtons();
+
     showScreen('day-detail-view');
+  },
+
+  renderPlanButtons() {
+    const container = document.getElementById('plan-selection');
+    container.innerHTML = '';
+
+    Object.keys(PLANS).forEach(key => {
+      const plan = PLANS[key];
+      const btn = document.createElement('button');
+      btn.className = 'plan-btn';
+
+      // 기본 플랜은 기존 색상, 커스텀은 주황색 계열
+      if (key === 'A') {
+        btn.classList.add('plan-a');
+      } else if (key === 'B') {
+        btn.classList.add('plan-b');
+      } else {
+        btn.classList.add('plan-custom-btn');
+      }
+
+      btn.textContent = `${plan.name} 시작`;
+      btn.addEventListener('click', () => this.startPlan(key));
+      container.appendChild(btn);
+    });
   },
 
   renderRecordSummary(record) {
     const plan = PLANS[record.plan];
-    let html = `<div class="record-summary"><h4>${plan.name} ${record.completed ? '✅' : '⏳'}</h4>`;
+    const planName = plan ? plan.name : record.plan + ' 플랜';
+    let html = `<div class="record-summary">`;
+    html += `<div class="record-summary-header">`;
+    html += `<h4>${planName} ${record.completed ? '✅' : '⏳'}</h4>`;
+    html += `<button class="record-delete-btn" onclick="DayDetail.confirmDeleteRecord()">삭제</button>`;
+    html += `</div>`;
 
     record.exercises.forEach(ex => {
       html += `<div class="record-exercise">`;
@@ -301,6 +384,10 @@ const DayDetail = {
 
     html += `</div>`;
     return html;
+  },
+
+  confirmDeleteRecord() {
+    showOverlay('delete-record-modal');
   },
 
   startPlan(planKey) {
@@ -617,11 +704,216 @@ const WorkoutSession = {
   }
 };
 
+// === 플랜 관리 모듈 ===
+const PlanManager = {
+  pendingDeleteKey: null,
+
+  init() {
+    // 플랜 관리 화면 열기/닫기
+    document.getElementById('manage-plans-btn').addEventListener('click', () => {
+      this.render();
+      showScreen('plan-manage-view');
+    });
+
+    document.getElementById('plan-manage-back').addEventListener('click', () => {
+      showScreen('calendar-view');
+      Calendar.render();
+    });
+
+    // 플랜 생성 화면
+    document.getElementById('add-plan-btn').addEventListener('click', () => {
+      this.openCreateForm();
+    });
+
+    document.getElementById('plan-create-back').addEventListener('click', () => {
+      this.render();
+      showScreen('plan-manage-view');
+    });
+
+    document.getElementById('add-exercise-btn').addEventListener('click', () => {
+      this.addExerciseFormRow();
+    });
+
+    document.getElementById('save-plan-btn').addEventListener('click', () => {
+      this.savePlan();
+    });
+
+    // 플랜 삭제 모달
+    document.getElementById('delete-plan-cancel').addEventListener('click', () => {
+      hideOverlay('delete-plan-modal');
+    });
+
+    document.getElementById('delete-plan-confirm').addEventListener('click', () => {
+      hideOverlay('delete-plan-modal');
+      if (this.pendingDeleteKey) {
+        DataManager.deleteCustomPlan(this.pendingDeleteKey);
+        this.pendingDeleteKey = null;
+        this.render();
+      }
+    });
+  },
+
+  // 플랜 관리 화면 렌더링
+  render() {
+    // 기본 플랜 목록
+    const defaultList = document.getElementById('default-plans-list');
+    defaultList.innerHTML = '';
+    Object.keys(DEFAULT_PLANS).forEach(key => {
+      defaultList.appendChild(this.createPlanItem(key, DEFAULT_PLANS[key], false));
+    });
+
+    // 커스텀 플랜 목록
+    const customList = document.getElementById('custom-plans-list');
+    customList.innerHTML = '';
+    const customPlans = DataManager.loadCustomPlans();
+    const customKeys = Object.keys(customPlans);
+
+    if (customKeys.length === 0) {
+      customList.innerHTML = '<p style="color: var(--text-muted); font-size: 0.85rem; padding: 8px 0;">커스텀 플랜이 없습니다</p>';
+    } else {
+      customKeys.forEach(key => {
+        customList.appendChild(this.createPlanItem(key, customPlans[key], true));
+      });
+    }
+  },
+
+  createPlanItem(key, plan, deletable) {
+    const item = document.createElement('div');
+    item.className = 'plan-item';
+
+    const exerciseNames = plan.exercises.map(e => e.name).join(', ');
+    item.innerHTML = `
+      <div class="plan-item-info">
+        <div class="plan-item-name">${plan.name}</div>
+        <div class="plan-item-detail">${plan.exercises.length}종목 · ${exerciseNames}</div>
+      </div>
+    `;
+
+    if (deletable) {
+      const actions = document.createElement('div');
+      actions.className = 'plan-item-actions';
+      const delBtn = document.createElement('button');
+      delBtn.className = 'delete-btn';
+      delBtn.textContent = '삭제';
+      delBtn.addEventListener('click', () => {
+        this.pendingDeleteKey = key;
+        document.getElementById('delete-plan-name').textContent = plan.name;
+        showOverlay('delete-plan-modal');
+      });
+      actions.appendChild(delBtn);
+      item.appendChild(actions);
+    }
+
+    return item;
+  },
+
+  // 플랜 생성 폼 열기
+  openCreateForm() {
+    document.getElementById('plan-name-input').value = '';
+    const container = document.getElementById('exercise-list-form');
+    container.innerHTML = '';
+    // 기본 1개 종목 폼 추가
+    this.addExerciseFormRow();
+    showScreen('plan-create-view');
+  },
+
+  exerciseFormCount: 0,
+
+  addExerciseFormRow() {
+    this.exerciseFormCount++;
+    const container = document.getElementById('exercise-list-form');
+    const item = document.createElement('div');
+    item.className = 'exercise-form-item';
+    item.dataset.exerciseIndex = this.exerciseFormCount;
+
+    item.innerHTML = `
+      <button class="remove-exercise-btn" aria-label="종목 삭제">✕</button>
+      <input type="text" class="form-input exercise-name-input" placeholder="종목 이름">
+      <div class="exercise-form-row">
+        <div>
+          <span class="form-input-small-label">세트</span>
+          <input type="number" class="form-input exercise-sets-input" placeholder="4" min="1" inputmode="numeric">
+        </div>
+        <div>
+          <span class="form-input-small-label">횟수</span>
+          <input type="number" class="form-input exercise-reps-input" placeholder="10" min="1" inputmode="numeric">
+        </div>
+        <div>
+          <span class="form-input-small-label">휴식(초)</span>
+          <input type="number" class="form-input exercise-rest-input" placeholder="90" min="0" inputmode="numeric">
+        </div>
+      </div>
+    `;
+
+    // 삭제 버튼
+    item.querySelector('.remove-exercise-btn').addEventListener('click', () => {
+      item.remove();
+    });
+
+    container.appendChild(item);
+  },
+
+  savePlan() {
+    const name = document.getElementById('plan-name-input').value.trim();
+    if (!name) {
+      alert('플랜 이름을 입력해주세요.');
+      return;
+    }
+
+    const exerciseItems = document.querySelectorAll('#exercise-list-form .exercise-form-item');
+    if (exerciseItems.length === 0) {
+      alert('최소 1개 종목을 추가해주세요.');
+      return;
+    }
+
+    const exercises = [];
+    let valid = true;
+
+    exerciseItems.forEach(item => {
+      const exName = item.querySelector('.exercise-name-input').value.trim();
+      const sets = parseInt(item.querySelector('.exercise-sets-input').value);
+      const reps = parseInt(item.querySelector('.exercise-reps-input').value);
+      const rest = parseInt(item.querySelector('.exercise-rest-input').value);
+
+      if (!exName || !sets || !reps || isNaN(rest)) {
+        valid = false;
+        return;
+      }
+
+      exercises.push({
+        name: exName,
+        sets: sets,
+        reps: reps,
+        restSeconds: rest || 0
+      });
+    });
+
+    if (!valid || exercises.length === 0) {
+      alert('모든 종목 정보를 입력해주세요.');
+      return;
+    }
+
+    // 고유 키 생성 (타임스탬프 기반)
+    const key = 'custom_' + Date.now();
+    const plan = { name, exercises };
+
+    DataManager.addCustomPlan(key, plan);
+
+    // 플랜 관리 화면으로 이동
+    this.render();
+    showScreen('plan-manage-view');
+  }
+};
+
 // === 이벤트 바인딩 ===
 document.addEventListener('DOMContentLoaded', () => {
+  // 플랜 초기화 (기본 + 커스텀)
+  refreshPlans();
+
   // 캘린더 초기화
   Calendar.init();
   DayDetail.init();
+  PlanManager.init();
 
   // 운동 세션 버튼
   document.getElementById('success-btn').addEventListener('click', () => {

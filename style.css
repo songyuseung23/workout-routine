@@ -337,6 +337,15 @@ body {
   color: #1a1a2e;
 }
 
+.plan-btn.plan-custom-btn {
+  background: #f4a261;
+  color: #1a1a2e;
+}
+
+.plan-selection {
+  flex-wrap: wrap;
+}
+
 /* ===================================
    운동 세션 화면
    =================================== */
@@ -762,4 +771,278 @@ body {
     border-left: 1px solid var(--border-color);
     border-right: 1px solid var(--border-color);
   }
+}
+
+/* ===================================
+   헤더 액션 버튼
+   =================================== */
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  text-align: left;
+}
+
+.header-action-btn {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  padding: 8px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+  min-height: 36px;
+}
+
+.header-action-btn:active {
+  background: var(--bg-card);
+}
+
+/* ===================================
+   플랜 관리 화면
+   =================================== */
+.plan-manage-content {
+  flex: 1;
+  padding: 0 20px 20px;
+  overflow-y: auto;
+}
+
+.plan-section {
+  margin-bottom: 24px;
+}
+
+.plan-section-title {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 10px;
+}
+
+.plans-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.plan-item {
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.plan-item-info {
+  flex: 1;
+}
+
+.plan-item-name {
+  font-weight: 600;
+  font-size: 0.95rem;
+  margin-bottom: 4px;
+}
+
+.plan-item-detail {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.plan-item-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.delete-btn {
+  background: none;
+  border: 1px solid var(--fail);
+  color: var(--fail);
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+  min-width: 44px;
+  min-height: 36px;
+}
+
+.delete-btn:active {
+  background: rgba(239, 71, 111, 0.15);
+}
+
+.add-plan-btn,
+.add-exercise-btn {
+  width: 100%;
+  padding: 14px;
+  background: transparent;
+  border: 2px dashed var(--border-color);
+  border-radius: var(--radius-md);
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+  margin-top: 10px;
+  min-height: 48px;
+}
+
+.add-plan-btn:active,
+.add-exercise-btn:active {
+  border-color: var(--accent-a);
+  color: var(--accent-a);
+}
+
+/* ===================================
+   플랜 생성 화면
+   =================================== */
+.plan-create-content {
+  flex: 1;
+  padding: 0 20px 20px;
+  overflow-y: auto;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.form-input {
+  width: 100%;
+  padding: 12px 14px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: 1rem;
+  min-height: 44px;
+}
+
+.form-input::placeholder {
+  color: var(--text-muted);
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: var(--accent-a);
+}
+
+.exercise-list-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.exercise-form-item {
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  padding: 14px;
+  position: relative;
+}
+
+.exercise-form-item .remove-exercise-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: none;
+  border: none;
+  color: var(--fail);
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 4px 8px;
+  min-width: 32px;
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.exercise-form-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.exercise-form-row .form-input {
+  flex: 1;
+  padding: 10px;
+  font-size: 0.85rem;
+  min-height: 40px;
+}
+
+.exercise-form-item .form-input.exercise-name-input {
+  padding-right: 36px;
+}
+
+.form-input-small-label {
+  display: block;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+  text-align: center;
+}
+
+.plan-create-actions {
+  padding: 16px 20px;
+  padding-bottom: calc(16px + var(--safe-bottom));
+}
+
+/* ===================================
+   위험 버튼 (삭제 등)
+   =================================== */
+.danger-btn {
+  background: var(--fail) !important;
+}
+
+.danger-btn:active {
+  background: var(--fail-dark) !important;
+}
+
+/* ===================================
+   기록 삭제 버튼 (날짜 상세)
+   =================================== */
+.record-summary-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.record-summary-header h4 {
+  margin-bottom: 0;
+}
+
+.record-delete-btn {
+  background: none;
+  border: none;
+  color: var(--fail);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  transition: background 0.2s;
+  min-height: 32px;
+}
+
+.record-delete-btn:active {
+  background: rgba(239, 71, 111, 0.15);
+}
+
+/* ===================================
+   캘린더 커스텀 플랜 dot 색상
+   =================================== */
+.calendar-cell .workout-dot.plan-custom {
+  background: #f4a261;
 }
