@@ -107,10 +107,265 @@ const DataManager = {
     delete plans[key];
     this.saveCustomPlans(plans);
     refreshPlans();
+  },
+
+  // 전체 데이터 내보내기
+  exportAll() {
+    return {
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      workoutRecords: this.loadRecords(),
+      customPlans: this.loadCustomPlans()
+    };
+  },
+
+  // 전체 데이터 가져오기 (덮어쓰기)
+  importAll(data) {
+    if (data.workoutRecords && typeof data.workoutRecords === 'object') {
+      this.saveRecords(data.workoutRecords);
+    }
+    if (data.customPlans && typeof data.customPlans === 'object') {
+      this.saveCustomPlans(data.customPlans);
+    }
+    refreshPlans();
   }
 };
 
-// === 화면 관리 ===
+// === 내보내기/가져오기 모듈 ===
+const ExportImport = {
+  pendingImportData: null,
+
+  init() {
+    // 내보내기 버튼
+    document.getElementById('export-btn').addEventListener('click', () => {
+      this.showExportModal();
+    });
+
+    // 내보내기 모달 - 파일 저장
+    document.getElementById('export-file-btn').addEventListener('click', () => {
+      this.exportAsFile();
+    });
+
+    // 내보내기 모달 - 클립보드 복사
+    document.getElementById('export-clipboard-btn').addEventListener('click', () => {
+      this.exportToClipboard();
+    });
+
+    // 내보내기 모달 - 닫기
+    document.getElementById('export-close-btn').addEventListener('click', () => {
+      hideOverlay('export-modal');
+    });
+
+    // 가져오기 버튼
+    document.getElementById('import-btn').addEventListener('click', () => {
+      document.getElementById('import-file-input').click();
+    });
+
+    // 파일 선택 시
+    document.getElementById('import-file-input').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        this.handleFileImport(file);
+      }
+      // 같은 파일 재선택 가능하도록 초기화
+      e.target.value = '';
+    });
+
+    // 가져오기 확인
+    document.getElementById('import-confirm-btn').addEventListener('click', () => {
+      this.confirmImport();
+    });
+
+    // 가져오기 취소
+    document.getElementById('import-cancel-btn').addEventListener('click', () => {
+      hideOverlay('import-confirm-modal');
+      this.pendingImportData = null;
+    });
+
+    // 가져오기 에러 닫기
+    document.getElementById('import-error-close-btn').addEventListener('click', () => {
+      hideOverlay('import-error-modal');
+    });
+  },
+
+  // 내보내기 모달 표시
+  showExportModal() {
+    const data = DataManager.exportAll();
+    const recordCount = Object.keys(data.workoutRecords).length;
+    const planCount = Object.keys(data.customPlans).length;
+
+    const summary = document.getElementById('export-summary');
+    summary.innerHTML = `
+      <div class="export-summary-item">
+        <span>운동 기록</span>
+        <span class="export-count">${recordCount}개</span>
+      </div>
+      <div class="export-summary-item">
+        <span>커스텀 플랜</span>
+        <span class="export-count">${planCount}개</span>
+      </div>
+    `;
+
+    // 클립보드 버튼 텍스트 초기화
+    document.getElementById('export-clipboard-btn').textContent = '📋 클립보드 복사';
+
+    showOverlay('export-modal');
+  },
+
+  // 파일 다운로드
+  exportAsFile() {
+    const data = DataManager.exportAll();
+    const json = JSON.stringify(data, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+
+    const today = new Date().toISOString().slice(0, 10);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `운동기록_${today}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  },
+
+  // 클립보드 복사
+  async exportToClipboard() {
+    const data = DataManager.exportAll();
+    const json = JSON.stringify(data, null, 2);
+    const btn = document.getElementById('export-clipboard-btn');
+
+    try {
+      await navigator.clipboard.writeText(json);
+      btn.textContent = '✅ 복사 완료!';
+      setTimeout(() => {
+        btn.textContent = '📋 클립보드 복사';
+      }, 2000);
+    } catch {
+      // clipboard API 실패 시 fallback
+      try {
+        const textarea = document.createElement('textarea');
+        textarea.value = json;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+        btn.textContent = '✅ 복사 완료!';
+        setTimeout(() => {
+          btn.textContent = '📋 클립보드 복사';
+        }, 2000);
+      } catch {
+        btn.textContent = '❌ 복사 실패';
+        setTimeout(() => {
+          btn.textContent = '📋 클립보드 복사';
+        }, 2000);
+      }
+    }
+  },
+
+  // 파일 가져오기 처리
+  handleFileImport(file) {
+    const reader = new FileReader();
+
+    reader.onload = (e) => {
+      try {
+        const data = JSON.parse(e.target.result);
+        const validation = this.validate(data);
+
+        if (!validation.valid) {
+          document.getElementById('import-error-message').textContent = validation.message;
+          showOverlay('import-error-modal');
+          return;
+        }
+
+        this.pendingImportData = data;
+        this.showImportConfirmModal(data);
+      } catch {
+        document.getElementById('import-error-message').textContent = 'JSON 파싱에 실패했습니다. 올바른 JSON 파일인지 확인해주세요.';
+        showOverlay('import-error-modal');
+      }
+    };
+
+    reader.onerror = () => {
+      document.getElementById('import-error-message').textContent = '파일을 읽을 수 없습니다.';
+      showOverlay('import-error-modal');
+    };
+
+    reader.readAsText(file);
+  },
+
+  // 유효성 검증
+  validate(data) {
+    if (!data || typeof data !== 'object') {
+      return { valid: false, message: '올바른 형식이 아닙니다.' };
+    }
+
+    if (typeof data.version === 'undefined') {
+      return { valid: false, message: 'version 필드가 없습니다. 이 앱에서 내보낸 파일인지 확인해주세요.' };
+    }
+
+    if (!data.workoutRecords || typeof data.workoutRecords !== 'object') {
+      return { valid: false, message: 'workoutRecords 데이터가 올바르지 않습니다.' };
+    }
+
+    // customPlans는 없어도 허용 (빈 객체로 처리)
+    if (data.customPlans && typeof data.customPlans !== 'object') {
+      return { valid: false, message: 'customPlans 데이터가 올바르지 않습니다.' };
+    }
+
+    return { valid: true };
+  },
+
+  // 가져오기 확인 모달 표시
+  showImportConfirmModal(data) {
+    const recordCount = Object.keys(data.workoutRecords).length;
+    const planCount = Object.keys(data.customPlans || {}).length;
+
+    const summary = document.getElementById('import-summary');
+    summary.innerHTML = `
+      <div class="import-summary-item">
+        <span>운동 기록</span>
+        <span class="import-count">${recordCount}개</span>
+      </div>
+      <div class="import-summary-item">
+        <span>커스텀 플랜</span>
+        <span class="import-count">${planCount}개</span>
+      </div>
+    `;
+
+    showOverlay('import-confirm-modal');
+  },
+
+  // 가져오기 실행
+  confirmImport() {
+    if (!this.pendingImportData) return;
+
+    // customPlans가 없으면 빈 객체로 보정
+    if (!this.pendingImportData.customPlans) {
+      this.pendingImportData.customPlans = {};
+    }
+
+    DataManager.importAll(this.pendingImportData);
+    this.pendingImportData = null;
+
+    hideOverlay('import-confirm-modal');
+
+    // 화면 갱신
+    PlanManager.render();
+    Calendar.render();
+
+    // 완료 피드백: 가져오기 버튼 텍스트 변경
+    const btn = document.getElementById('import-btn');
+    btn.textContent = '✅ 가져오기 완료!';
+    setTimeout(() => {
+      btn.textContent = '📤 가져오기';
+    }, 2000);
+  }
+};
+
+// === 이벤트 바인딩 ===
 function showScreen(screenId) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   const target = document.getElementById(screenId);
@@ -914,6 +1169,7 @@ document.addEventListener('DOMContentLoaded', () => {
   Calendar.init();
   DayDetail.init();
   PlanManager.init();
+  ExportImport.init();
 
   // 운동 세션 버튼
   document.getElementById('success-btn').addEventListener('click', () => {

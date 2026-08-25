@@ -1046,3 +1046,98 @@ body {
 .calendar-cell .workout-dot.plan-custom {
   background: #f4a261;
 }
+
+/* ===================================
+   데이터 관리 섹션
+   =================================== */
+.data-management-section {
+  margin-top: 8px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border-color);
+}
+
+.data-management-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.data-btn {
+  flex: 1;
+  padding: 14px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.15s;
+  min-height: 48px;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+.data-btn:active {
+  transform: scale(0.97);
+  background: var(--bg-card);
+}
+
+/* ===================================
+   내보내기 모달
+   =================================== */
+.export-summary,
+.import-summary {
+  background: var(--bg-card);
+  border-radius: var(--radius-sm);
+  padding: 12px 16px;
+  margin-bottom: 20px;
+}
+
+.export-summary-item,
+.import-summary-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+  font-size: 0.9rem;
+}
+
+.export-summary-item:not(:last-child),
+.import-summary-item:not(:last-child) {
+  border-bottom: 1px solid var(--border-color);
+}
+
+.export-count,
+.import-count {
+  font-weight: 700;
+  color: var(--accent-a-light);
+}
+
+.export-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.clipboard-btn {
+  background: var(--bg-card) !important;
+  border: 1px solid var(--border-color) !important;
+  color: var(--text-primary) !important;
+}
+
+.clipboard-btn:active {
+  background: var(--bg-card-hover) !important;
+}
+
+.export-close-btn {
+  width: 100%;
+  margin-top: 4px;
+}
+
+/* ===================================
+   가져오기 모달
+   =================================== */
+.import-warning {
+  color: var(--fail) !important;
+  font-weight: 600 !important;
+  font-size: 0.85rem !important;
+}

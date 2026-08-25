@@ -51,6 +51,54 @@
           </div>
           <button id="add-plan-btn" class="add-plan-btn">+ 새 플랜 추가</button>
         </div>
+
+        <div class="plan-section data-management-section">
+          <h3 class="plan-section-title">데이터 관리</h3>
+          <div class="data-management-buttons">
+            <button id="export-btn" class="data-btn export-btn">📤 내보내기</button>
+            <button id="import-btn" class="data-btn import-btn">📥 가져오기</button>
+          </div>
+          <input type="file" id="import-file-input" accept=".json" style="display: none;">
+        </div>
+      </div>
+    </div>
+
+    <!-- 내보내기 모달 -->
+    <div id="export-modal" class="overlay">
+      <div class="modal-content">
+        <h3>데이터 내보내기</h3>
+        <div id="export-summary" class="export-summary">
+          <!-- JS가 요약 정보 표시 -->
+        </div>
+        <div class="export-actions">
+          <button id="export-file-btn" class="confirm-btn">📁 파일 저장</button>
+          <button id="export-clipboard-btn" class="confirm-btn clipboard-btn">📋 클립보드 복사</button>
+        </div>
+        <button id="export-close-btn" class="cancel-btn export-close-btn">닫기</button>
+      </div>
+    </div>
+
+    <!-- 가져오기 확인 모달 -->
+    <div id="import-confirm-modal" class="overlay">
+      <div class="modal-content">
+        <h3>데이터 가져오기</h3>
+        <div id="import-summary" class="import-summary">
+          <!-- JS가 요약 정보 표시 -->
+        </div>
+        <p class="import-warning">⚠️ 기존 데이터를 덮어씁니다</p>
+        <div class="modal-actions">
+          <button id="import-cancel-btn" class="cancel-btn">취소</button>
+          <button id="import-confirm-btn" class="confirm-btn danger-btn">가져오기</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 가져오기 에러 모달 -->
+    <div id="import-error-modal" class="overlay">
+      <div class="modal-content">
+        <h3>가져오기 실패</h3>
+        <p id="import-error-message">올바른 형식이 아닙니다.</p>
+        <button id="import-error-close-btn" class="confirm-btn">확인</button>
       </div>
     </div>
 
