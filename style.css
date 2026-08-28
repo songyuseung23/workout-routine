@@ -308,6 +308,7 @@ body {
   padding-bottom: calc(16px + var(--safe-bottom));
   display: flex;
   gap: 12px;
+  flex-wrap: wrap;
 }
 
 .plan-btn {
@@ -340,10 +341,6 @@ body {
 .plan-btn.plan-custom-btn {
   background: #f4a261;
   color: #1a1a2e;
-}
-
-.plan-selection {
-  flex-wrap: wrap;
 }
 
 /* ===================================
