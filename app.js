@@ -31,6 +31,7 @@ const DataManager = {
   RECORDS_KEY: 'workoutRecords',
   IN_PROGRESS_KEY: 'workoutInProgress',
   CUSTOM_PLANS_KEY: 'customPlans',
+  WEIGHT_KEY: 'weightRecords',
 
   loadRecords() {
     try {
@@ -109,13 +110,41 @@ const DataManager = {
     refreshPlans();
   },
 
+  // 체중 기록 관리
+  loadWeightRecords() {
+    try {
+      const data = localStorage.getItem(this.WEIGHT_KEY);
+      return data ? JSON.parse(data) : {};
+    } catch {
+      return {};
+    }
+  },
+
+  saveWeightRecord(dateStr, weight) {
+    const records = this.loadWeightRecords();
+    records[dateStr] = weight;
+    localStorage.setItem(this.WEIGHT_KEY, JSON.stringify(records));
+  },
+
+  getWeight(dateStr) {
+    const records = this.loadWeightRecords();
+    return records[dateStr] !== undefined ? records[dateStr] : null;
+  },
+
+  deleteWeight(dateStr) {
+    const records = this.loadWeightRecords();
+    delete records[dateStr];
+    localStorage.setItem(this.WEIGHT_KEY, JSON.stringify(records));
+  },
+
   // 전체 데이터 내보내기
   exportAll() {
     return {
       version: 1,
       exportedAt: new Date().toISOString(),
       workoutRecords: this.loadRecords(),
-      customPlans: this.loadCustomPlans()
+      customPlans: this.loadCustomPlans(),
+      weightRecords: this.loadWeightRecords()
     };
   },
 
@@ -126,6 +155,9 @@ const DataManager = {
     }
     if (data.customPlans && typeof data.customPlans === 'object') {
       this.saveCustomPlans(data.customPlans);
+    }
+    if (data.weightRecords && typeof data.weightRecords === 'object') {
+      localStorage.setItem(this.WEIGHT_KEY, JSON.stringify(data.weightRecords));
     }
     refreshPlans();
   }
@@ -193,6 +225,7 @@ const ExportImport = {
     const data = DataManager.exportAll();
     const recordCount = Object.keys(data.workoutRecords).length;
     const planCount = Object.keys(data.customPlans).length;
+    const weightCount = Object.keys(data.weightRecords || {}).length;
 
     const summary = document.getElementById('export-summary');
     summary.innerHTML = `
@@ -203,6 +236,10 @@ const ExportImport = {
       <div class="export-summary-item">
         <span>커스텀 플랜</span>
         <span class="export-count">${planCount}개</span>
+      </div>
+      <div class="export-summary-item">
+        <span>체중 기록</span>
+        <span class="export-count">${weightCount}개</span>
       </div>
     `;
 
@@ -315,6 +352,11 @@ const ExportImport = {
       return { valid: false, message: 'customPlans 데이터가 올바르지 않습니다.' };
     }
 
+    // weightRecords는 없어도 허용 (빈 객체로 처리)
+    if (data.weightRecords && typeof data.weightRecords !== 'object') {
+      return { valid: false, message: 'weightRecords 데이터가 올바르지 않습니다.' };
+    }
+
     return { valid: true };
   },
 
@@ -322,6 +364,7 @@ const ExportImport = {
   showImportConfirmModal(data) {
     const recordCount = Object.keys(data.workoutRecords).length;
     const planCount = Object.keys(data.customPlans || {}).length;
+    const weightCount = Object.keys(data.weightRecords || {}).length;
 
     const summary = document.getElementById('import-summary');
     summary.innerHTML = `
@@ -332,6 +375,10 @@ const ExportImport = {
       <div class="import-summary-item">
         <span>커스텀 플랜</span>
         <span class="import-count">${planCount}개</span>
+      </div>
+      <div class="import-summary-item">
+        <span>체중 기록</span>
+        <span class="import-count">${weightCount}개</span>
       </div>
     `;
 
@@ -355,6 +402,7 @@ const ExportImport = {
     // 화면 갱신
     PlanManager.render();
     Calendar.render();
+    WeightTracker.loadTodayWeight();
 
     // 완료 피드백: 가져오기 버튼 텍스트 변경
     const btn = document.getElementById('import-btn');
@@ -578,14 +626,17 @@ const DayDetail = {
     document.getElementById('day-detail-date').textContent = displayDate;
 
     // 기존 기록 표시
-    const content = document.getElementById('day-detail-content');
+    const recordsContainer = document.getElementById('day-detail-records');
     const record = DataManager.getRecord(dateStr);
 
     if (record) {
-      content.innerHTML = this.renderRecordSummary(record);
+      recordsContainer.innerHTML = this.renderRecordSummary(record);
     } else {
-      content.innerHTML = '<p style="color: var(--text-muted); text-align: center; padding: 40px 0;">기록이 없습니다</p>';
+      recordsContainer.innerHTML = '<p style="color: var(--text-muted); text-align: center; padding: 40px 0;">기록이 없습니다</p>';
     }
+
+    // 체중 섹션 표시
+    WeightTracker.showDayWeight(dateStr);
 
     // 플랜 선택 버튼 동적 생성
     this.renderPlanButtons();
@@ -1160,6 +1211,365 @@ const PlanManager = {
   }
 };
 
+// === 체중 트래커 모듈 ===
+const WeightTracker = {
+  chartOpen: false,
+  chartDays: 7,
+
+  init() {
+    // 오늘 체중 저장
+    document.getElementById('weight-save-btn').addEventListener('click', () => {
+      this.saveTodayWeight();
+    });
+
+    // 엔터키로 저장
+    document.getElementById('weight-input').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        this.saveTodayWeight();
+      }
+    });
+
+    // 차트 토글
+    document.getElementById('weight-chart-toggle').addEventListener('click', () => {
+      this.toggleChart();
+    });
+
+    // 기간 버튼
+    document.querySelectorAll('.weight-period-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.weight-period-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        this.chartDays = parseInt(btn.dataset.days);
+        this.drawChart();
+      });
+    });
+
+    // 날짜 상세 체중 저장
+    document.getElementById('day-weight-save-btn').addEventListener('click', () => {
+      this.saveDayWeight();
+    });
+
+    // 날짜 상세 체중 삭제
+    document.getElementById('day-weight-delete-btn').addEventListener('click', () => {
+      this.deleteDayWeight();
+    });
+
+    // 날짜 상세 엔터키로 저장
+    document.getElementById('day-weight-input').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        this.saveDayWeight();
+      }
+    });
+
+    // 오늘 체중 로드
+    this.loadTodayWeight();
+  },
+
+  getTodayStr() {
+    return Calendar.formatDate(new Date());
+  },
+
+  loadTodayWeight() {
+    const today = this.getTodayStr();
+    const weight = DataManager.getWeight(today);
+    const input = document.getElementById('weight-input');
+
+    if (weight !== null) {
+      input.value = weight;
+    } else {
+      input.value = '';
+    }
+
+    // 저장 메시지 숨김
+    document.getElementById('weight-saved-msg').style.display = 'none';
+
+    // 차트가 열려있으면 갱신
+    if (this.chartOpen) {
+      this.drawChart();
+    }
+  },
+
+  saveTodayWeight() {
+    const input = document.getElementById('weight-input');
+    const weight = parseFloat(input.value);
+
+    if (isNaN(weight) || weight <= 0) {
+      return;
+    }
+
+    const today = this.getTodayStr();
+    DataManager.saveWeightRecord(today, weight);
+
+    // 확인 메시지 표시
+    const msg = document.getElementById('weight-saved-msg');
+    msg.style.display = 'block';
+    setTimeout(() => {
+      msg.style.display = 'none';
+    }, 2000);
+
+    // 차트 갱신
+    if (this.chartOpen) {
+      this.drawChart();
+    }
+  },
+
+  toggleChart() {
+    this.chartOpen = !this.chartOpen;
+    const section = document.getElementById('weight-chart-section');
+    const arrow = document.getElementById('weight-chart-arrow');
+
+    if (this.chartOpen) {
+      section.style.display = 'block';
+      arrow.classList.add('open');
+      this.drawChart();
+    } else {
+      section.style.display = 'none';
+      arrow.classList.remove('open');
+    }
+  },
+
+  drawChart() {
+    const records = DataManager.loadWeightRecords();
+    const canvas = document.getElementById('weight-chart-canvas');
+    const emptyMsg = document.getElementById('weight-chart-empty');
+    const statsEl = document.getElementById('weight-chart-stats');
+
+    // 기간 내 데이터 수집
+    const today = new Date();
+    const dates = [];
+    const values = [];
+
+    for (let i = this.chartDays - 1; i >= 0; i--) {
+      const d = new Date(today);
+      d.setDate(today.getDate() - i);
+      const dateStr = Calendar.formatDate(d);
+      const weight = records[dateStr];
+      dates.push(dateStr);
+      values.push(weight !== undefined ? weight : null);
+    }
+
+    // 유효 데이터 필터링
+    const validValues = values.filter(v => v !== null);
+
+    if (validValues.length < 2) {
+      canvas.style.display = 'none';
+      emptyMsg.style.display = 'block';
+      statsEl.innerHTML = '';
+      return;
+    }
+
+    canvas.style.display = 'block';
+    emptyMsg.style.display = 'none';
+
+    // 통계
+    const minVal = Math.min(...validValues);
+    const maxVal = Math.max(...validValues);
+    const currentVal = validValues[validValues.length - 1];
+
+    statsEl.innerHTML = `
+      <div class="weight-stat-item">
+        <span class="weight-stat-label">최저</span>
+        <span class="weight-stat-value">${minVal.toFixed(1)}</span>
+      </div>
+      <div class="weight-stat-item">
+        <span class="weight-stat-label">최고</span>
+        <span class="weight-stat-value">${maxVal.toFixed(1)}</span>
+      </div>
+      <div class="weight-stat-item">
+        <span class="weight-stat-label">현재</span>
+        <span class="weight-stat-value">${currentVal.toFixed(1)}</span>
+      </div>
+    `;
+
+    // 캔버스 DPI 스케일링
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+
+    const ctx = canvas.getContext('2d');
+    ctx.scale(dpr, dpr);
+
+    const w = rect.width;
+    const h = rect.height;
+
+    // 클리어
+    ctx.clearRect(0, 0, w, h);
+
+    // 여백
+    const paddingTop = 20;
+    const paddingBottom = 28;
+    const paddingLeft = 10;
+    const paddingRight = 10;
+
+    const chartW = w - paddingLeft - paddingRight;
+    const chartH = h - paddingTop - paddingBottom;
+
+    // Y축 범위 (패딩 추가)
+    const range = maxVal - minVal;
+    const yPadding = range > 0 ? range * 0.2 : 1;
+    const yMin = minVal - yPadding;
+    const yMax = maxVal + yPadding;
+
+    // 유효 데이터 포인트 인덱스
+    const points = [];
+    for (let i = 0; i < dates.length; i++) {
+      if (values[i] !== null) {
+        const x = paddingLeft + (i / (dates.length - 1)) * chartW;
+        const y = paddingTop + (1 - (values[i] - yMin) / (yMax - yMin)) * chartH;
+        points.push({ x, y, value: values[i], dateIdx: i });
+      }
+    }
+
+    // 가이드라인 (수평)
+    ctx.strokeStyle = 'rgba(42, 42, 74, 0.5)';
+    ctx.lineWidth = 1;
+    for (let i = 0; i <= 3; i++) {
+      const y = paddingTop + (i / 3) * chartH;
+      ctx.beginPath();
+      ctx.moveTo(paddingLeft, y);
+      ctx.lineTo(w - paddingRight, y);
+      ctx.stroke();
+    }
+
+    // 라인 그리기
+    if (points.length >= 2) {
+      ctx.beginPath();
+      ctx.strokeStyle = '#4361ee';
+      ctx.lineWidth = 2;
+      ctx.lineJoin = 'round';
+      ctx.lineCap = 'round';
+
+      ctx.moveTo(points[0].x, points[0].y);
+      for (let i = 1; i < points.length; i++) {
+        ctx.lineTo(points[i].x, points[i].y);
+      }
+      ctx.stroke();
+
+      // 그라데이션 채우기
+      const gradient = ctx.createLinearGradient(0, paddingTop, 0, h - paddingBottom);
+      gradient.addColorStop(0, 'rgba(67, 97, 238, 0.2)');
+      gradient.addColorStop(1, 'rgba(67, 97, 238, 0)');
+
+      ctx.beginPath();
+      ctx.moveTo(points[0].x, points[0].y);
+      for (let i = 1; i < points.length; i++) {
+        ctx.lineTo(points[i].x, points[i].y);
+      }
+      ctx.lineTo(points[points.length - 1].x, h - paddingBottom);
+      ctx.lineTo(points[0].x, h - paddingBottom);
+      ctx.closePath();
+      ctx.fillStyle = gradient;
+      ctx.fill();
+    }
+
+    // 데이터 포인트 (dot)
+    points.forEach((p, i) => {
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 3.5, 0, Math.PI * 2);
+      ctx.fillStyle = '#4361ee';
+      ctx.fill();
+      ctx.strokeStyle = '#1a1a2e';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      // 값 라벨 (첫번째, 마지막, 혹은 점이 적을 때)
+      if (i === 0 || i === points.length - 1 || points.length <= 7) {
+        ctx.fillStyle = '#a0a0b8';
+        ctx.font = '10px -apple-system, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(p.value.toFixed(1), p.x, p.y - 8);
+      }
+    });
+
+    // X축 날짜 라벨
+    ctx.fillStyle = '#6c6c80';
+    ctx.font = '9px -apple-system, sans-serif';
+    ctx.textAlign = 'center';
+
+    const labelStep = this.chartDays <= 7 ? 1 : Math.ceil(this.chartDays / 7);
+    for (let i = 0; i < dates.length; i += labelStep) {
+      const x = paddingLeft + (i / (dates.length - 1)) * chartW;
+      const d = new Date(dates[i] + 'T00:00:00');
+      const label = `${d.getMonth() + 1}/${d.getDate()}`;
+      ctx.fillText(label, x, h - 6);
+    }
+    // 항상 마지막 날짜 라벨 표시
+    if ((dates.length - 1) % labelStep !== 0) {
+      const lastX = paddingLeft + chartW;
+      const lastD = new Date(dates[dates.length - 1] + 'T00:00:00');
+      const lastLabel = `${lastD.getMonth() + 1}/${lastD.getDate()}`;
+      ctx.fillText(lastLabel, lastX, h - 6);
+    }
+  },
+
+  // 날짜 상세 체중 표시
+  showDayWeight(dateStr) {
+    const section = document.getElementById('day-weight-section');
+    const input = document.getElementById('day-weight-input');
+    const deleteBtn = document.getElementById('day-weight-delete-btn');
+    const msg = document.getElementById('day-weight-saved-msg');
+
+    section.style.display = 'block';
+    msg.style.display = 'none';
+    section.dataset.date = dateStr;
+
+    const weight = DataManager.getWeight(dateStr);
+    if (weight !== null) {
+      input.value = weight;
+      deleteBtn.style.display = 'flex';
+    } else {
+      input.value = '';
+      deleteBtn.style.display = 'none';
+    }
+  },
+
+  saveDayWeight() {
+    const input = document.getElementById('day-weight-input');
+    const weight = parseFloat(input.value);
+    const section = document.getElementById('day-weight-section');
+    const dateStr = section.dataset.date;
+
+    if (isNaN(weight) || weight <= 0 || !dateStr) {
+      return;
+    }
+
+    DataManager.saveWeightRecord(dateStr, weight);
+
+    // 삭제 버튼 표시
+    document.getElementById('day-weight-delete-btn').style.display = 'flex';
+
+    // 확인 메시지
+    const msg = document.getElementById('day-weight-saved-msg');
+    msg.style.display = 'block';
+    setTimeout(() => {
+      msg.style.display = 'none';
+    }, 2000);
+
+    // 메인 화면 체중 동기화 (오늘인 경우)
+    if (dateStr === this.getTodayStr()) {
+      document.getElementById('weight-input').value = weight;
+    }
+  },
+
+  deleteDayWeight() {
+    const section = document.getElementById('day-weight-section');
+    const dateStr = section.dataset.date;
+    if (!dateStr) return;
+
+    DataManager.deleteWeight(dateStr);
+    document.getElementById('day-weight-input').value = '';
+    document.getElementById('day-weight-delete-btn').style.display = 'none';
+
+    // 메인 화면 체중 동기화 (오늘인 경우)
+    if (dateStr === this.getTodayStr()) {
+      document.getElementById('weight-input').value = '';
+    }
+  }
+};
+
 // === 이벤트 바인딩 ===
 document.addEventListener('DOMContentLoaded', () => {
   // 플랜 초기화 (기본 + 커스텀)
@@ -1170,6 +1580,7 @@ document.addEventListener('DOMContentLoaded', () => {
   DayDetail.init();
   PlanManager.init();
   ExportImport.init();
+  WeightTracker.init();
 
   // 운동 세션 버튼
   document.getElementById('success-btn').addEventListener('click', () => {

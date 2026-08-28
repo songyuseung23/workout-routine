@@ -1141,3 +1141,245 @@ body {
   font-weight: 600 !important;
   font-size: 0.85rem !important;
 }
+
+/* ===================================
+   체중 트래커
+   =================================== */
+.weight-tracker-card {
+  margin: 0 20px 8px;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+}
+
+.weight-input-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.weight-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.weight-input-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.weight-input {
+  width: 72px;
+  height: 40px;
+  text-align: center;
+  font-size: 1rem;
+  font-weight: 700;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  -moz-appearance: textfield;
+}
+
+.weight-input::-webkit-outer-spin-button,
+.weight-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.weight-input:focus {
+  outline: none;
+  border-color: var(--accent-a);
+}
+
+.weight-input::placeholder {
+  color: var(--text-muted);
+}
+
+.weight-unit {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.weight-save-btn {
+  padding: 8px 14px;
+  background: var(--accent-a);
+  border: none;
+  border-radius: var(--radius-sm);
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.15s, opacity 0.15s;
+  min-width: 44px;
+  min-height: 40px;
+}
+
+.weight-save-btn:active {
+  transform: scale(0.95);
+  opacity: 0.85;
+}
+
+.weight-saved-msg {
+  font-size: 0.8rem;
+  color: var(--success);
+  text-align: right;
+  padding-top: 6px;
+  animation: fadeIn 0.25s ease;
+}
+
+.weight-chart-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  background: none;
+  border: none;
+  border-top: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 10px 0 0;
+  margin-top: 10px;
+  min-height: 36px;
+}
+
+.weight-chart-toggle:active {
+  color: var(--text-primary);
+}
+
+.weight-chart-arrow {
+  font-size: 0.7rem;
+  transition: transform 0.2s;
+}
+
+.weight-chart-arrow.open {
+  transform: rotate(180deg);
+}
+
+.weight-chart-section {
+  padding-top: 10px;
+}
+
+.weight-chart-period {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.weight-period-btn {
+  flex: 1;
+  padding: 6px 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+  min-height: 32px;
+}
+
+.weight-period-btn.active {
+  background: var(--accent-a);
+  border-color: var(--accent-a);
+  color: #fff;
+}
+
+.weight-period-btn:active {
+  transform: scale(0.97);
+}
+
+.weight-chart-stats {
+  display: flex;
+  justify-content: space-around;
+  margin-bottom: 10px;
+  gap: 6px;
+}
+
+.weight-stat-item {
+  text-align: center;
+  flex: 1;
+}
+
+.weight-stat-label {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  font-weight: 500;
+  display: block;
+  margin-bottom: 2px;
+}
+
+.weight-stat-value {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.weight-chart-canvas {
+  width: 100%;
+  height: 140px;
+  border-radius: var(--radius-sm);
+}
+
+.weight-chart-empty {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  padding: 30px 0;
+}
+
+/* ===================================
+   날짜 상세 체중 섹션
+   =================================== */
+.day-weight-section {
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  margin-bottom: 16px;
+}
+
+.day-weight-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.day-weight-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.day-weight-input-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.weight-delete-btn {
+  width: 32px;
+  height: 32px;
+  background: none;
+  border: 1px solid var(--fail);
+  border-radius: var(--radius-sm);
+  color: var(--fail);
+  font-size: 0.9rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+  min-width: 32px;
+}
+
+.weight-delete-btn:active {
+  background: rgba(239, 71, 111, 0.15);
+}
